@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import transformers
 from typing import Optional
 
 class CustomIgLM(nn.Module, IgLM):
@@ -37,6 +38,12 @@ class CustomIgLM(nn.Module, IgLM):
         """
         super().__init__()
         IgLM.__init__(self, model_name=model_name)
+
+        from iglm.model.IgLM import VOCAB_FILE as IGLM_VOCAB_FILE
+        try:
+            self.tokenizer = transformers.BertTokenizerFast(vocab=IGLM_VOCAB_FILE, do_lower_case=False)
+        except TypeError:
+            self.tokenizer = transformers.BertTokenizerFast(vocab_file=IGLM_VOCAB_FILE, do_lower_case=False)
 
         if device is not None:
             self.device = device
