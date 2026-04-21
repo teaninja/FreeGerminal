@@ -297,7 +297,7 @@ def germinal_design(
             softmax_plddt > save_filters["plddt"]
             and softmax_iptm > save_filters["i_ptm"]
             and softmax_ipae < save_filters["i_pae"]
-            and af_model._tmp["best"]["mean_soft_pseudo"] >= seq_entropy_threshold
+            and af_model._tmp["best"].get("mean_soft_pseudo", 1) >= seq_entropy_threshold
         ):
             print(
                 "Softmax trajectory pLDDT good, continuing (plddt/iptm/ipae): ",
@@ -324,12 +324,14 @@ def germinal_design(
         else:
             io.update_failures("Trajectory_softmax_pLDDT")
             print(
-                "Softmax trajectory metrics too low to continue: ",
+                "Softmax trajectory metrics too low or sequence entropy too high to continue: ",
                 str(softmax_plddt),
                 "/",
                 str(softmax_iptm),
                 "/",
                 str(softmax_ipae),
+                "/",
+                str(af_model._tmp["best"].get("mean_soft_pseudo", "N/A")),
             )
             fail_confidence = True
     else:

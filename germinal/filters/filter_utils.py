@@ -7,9 +7,13 @@ import os
 from tempfile import gettempdir
 from typing import Any, Dict, Tuple, Sequence, Set, Union, List
 import numpy as np
+import torch
+import torch.nn.functional as F
+import ablang2
+from ablang2.models.ablang2.vocab import ablang_vocab
 from iglm import IgLM
 from germinal.utils import utils
-from germinal.filters import af3, chai, pDockQ, pyrosetta_utils
+from germinal.filters import af3, chai, protenix, pDockQ, pyrosetta_utils
 from germinal.utils.io import IO, Trajectory
 
 
@@ -161,11 +165,28 @@ def run_filters(
     )
 
     # ========================== Calculate pDockQ, pDockQ2, LIS/LIA ==========================
-    pdockq_metrics, lis_metrics, pDockQ2_out = compute_pdockq_and_lis(
-        external_pdb=external_pdb,
-        external_metrics=external_metrics,
-        binder_chain=binder_chain,
-    )
+    pae_matrix = external_metrics.get("pae_matrix", np.array([[0.0]]))
+    if not isinstance(pae_matrix, np.ndarray):
+        pae_matrix = np.array(pae_matrix)
+    has_valid_pae = pae_matrix.size > 1
+
+    if has_valid_pae:
+        pdockq_metrics, lis_metrics, pDockQ2_out = compute_pdockq_and_lis(
+            external_pdb=external_pdb,
+            external_metrics=external_metrics,
+            binder_chain=binder_chain,
+        )
+        i_pae = pDockQ2_out["ifpae_norm"].mean()
+        i_plddt = pDockQ2_out["ifplddt"].mean() / 100
+    else:
+        # PAE matrix not available (e.g. Protenix without full_data output).
+        # Use ipsae values if available, otherwise defaults.
+        pdockq_metrics = {"pDockQ2": ipsae["pdockq2"] if ipsae else 0.0}
+        lis_metrics = {"lis": ipsae.get("LIS", 0.0) if ipsae else 0.0, "lia": 0.0}
+        pDockQ2_out = None
+        i_pae = None
+        i_plddt = None
+        print("Warning: PAE matrix not available, using ipsae metrics for pDockQ2/LIS")
 
     # ========================== Aggregate Confidence Metrics ==========================
     confidence_metrics = {
@@ -176,8 +197,8 @@ def run_filters(
         "chain_ptm": external_metrics["chain_ptm"][-1],
         "pae": external_metrics["pae"].item(),
         "aggregate_score": external_metrics["aggregate_score"][0],
-        "i_pae": pDockQ2_out["ifpae_norm"].mean(),
-        "i_plddt": (pDockQ2_out["ifplddt"].mean() / 100),
+        "i_pae": i_pae,
+        "i_plddt": i_plddt,
         "binder_pae": external_metrics["binder_pae"].item(),
         "ipsae":ipsae
     }
@@ -207,18 +228,26 @@ def run_filters(
     except Exception:
         binder_rmsd = 100
 
-    # ========================== Get Log-likelihood from IgLM ==========================
+    # ========================== Get Log-likelihood from AbLM ==========================
     if run_settings["ablm_model"] == "iglm":
-        iglm_ll = get_iglm_ll(
+        ablm_ll = get_iglm_ll(
             sequence=trajectory_sequence,
             species_token=run_settings["iglm_species"],
             vh_first=run_settings["vh_first"],
             vh_len=run_settings["vh_len"],
             vl_len=run_settings["vl_len"],
         )
+    elif run_settings["ablm_model"] == "ablang":
+        ablm_ll = get_ablang_ll(
+            sequence=trajectory_sequence,
+            binder_type=run_settings["type"],
+            vh_first=run_settings["vh_first"],
+            vh_len=run_settings["vh_len"],
+            vl_len=run_settings["vl_len"],
+        )
     else:
-        iglm_ll = -1
-        print(f"Warning: {run_settings['ablm_model']} is not IgLM, skipping log-likelihood calculation")
+        ablm_ll = -1
+        print(f"Warning: {run_settings['ablm_model']} not recognized, skipping LL")
 
     # ========================== Aggregate Filter Metrics ==========================
     filter_metrics = build_filter_metrics(
@@ -240,7 +269,7 @@ def run_filters(
         num_clashes_trajectory,
         num_clashes_relaxed,
         binder_near_hotspot,
-        iglm_ll,
+        ablm_ll,
     )
 
     # ========================== Evaluate Filter Set ==========================
@@ -268,7 +297,7 @@ def build_filter_metrics(
     num_clashes_trajectory,
     num_clashes_relaxed,
     binder_near_hotspot,
-    iglm_ll,
+    ablm_ll,
 ) -> Dict[str, Any]:
     """
     Aggregate all metrics into comprehensive evaluation dict (floats rounded to 4 decimals).
@@ -354,8 +383,8 @@ def build_filter_metrics(
         "interface_AA": interface_metrics["interface_AA"],
         "interface_residues": interface_metrics["interface_residues"],
         "ss_content": ss_content,
-        # iglm
-        "iglm_ll": iglm_ll,
+        # ablm log-likelihood (iglm or ablang)
+        "ablm_ll": ablm_ll,
     }
 
     # round floats to 4 decimals for compactness
@@ -390,8 +419,13 @@ def evaluate_filters(
         threshold = filter_config["value"]
         operator = filter_config["operator"]
 
-        # Evaluate based on operator
-        if operator == "<":
+        if metric_value is None:
+            # Known limitation: i_pae and i_plddt are None when the structure predictor
+            # does not return a full PAE matrix (e.g. Protenix without full_data output).
+            # Filters on these metrics are skipped rather than failing the design.
+            print(f"\n\nWarning: Metric '{filter_name}' is None, passing filter {filter_name}!!\n\n")
+            passed = True
+        elif operator == "<":
             passed = metric_value < threshold
         elif operator == "<=":
             passed = metric_value <= threshold
@@ -517,6 +551,7 @@ def run_structure_prediction(
             run_settings,
             binder_chain=binder_chain,
             msa_mode=run_settings["msa_mode"],
+            select_mode=run_settings["af3_structure_select_mode"],
         )
     elif run_settings["structure_model"] == "chai":
 
@@ -535,9 +570,22 @@ def run_structure_prediction(
             binder_chain=binder_chain,
             target_len=target_len,
         )
+    elif run_settings["structure_model"] == "protenix":
+        external_pdb, external_metrics, ipsae = protenix.run_protenix(
+            trajectory_sequence,
+            target_sequence,
+            target_chain,
+            structures_directory,
+            design_name,
+            af3_seed,
+            run_settings,
+            binder_chain=binder_chain,
+            msa_mode=run_settings["msa_mode"],
+            select_mode=run_settings.get("af3_structure_select_mode", "best"),
+        )
     else:
         raise ValueError(
-            f"Structure model {run_settings['structure_model']} not supported, select either af3 or chai"
+            f"Structure model {run_settings['structure_model']} not supported, select either af3, chai, or protenix"
         )
 
     return external_pdb, external_metrics, ipsae
@@ -701,5 +749,77 @@ def get_iglm_ll(
         log_likelihood = log_likelihood_h + log_likelihood_l
     else:
         log_likelihood = model.log_likelihood(sequence, chain_token, species_token)
+
+    return log_likelihood
+
+
+def get_ablang_ll(
+    sequence,
+    binder_type="nb",
+    vh_first=True,
+    vh_len=0,
+    vl_len=0,
+):
+    """
+    Calculate antibody sequence log-likelihood using AbLang language model.
+
+    Uses AbLang2-paired for scFv sequences and AbLang1-heavy for VHH/nanobodies.
+    Computes autoregressive cross-entropy loss as the log-likelihood metric,
+    matching the computation in colabdesign's CustomAbLang.get_grad().
+
+    Attribution: Olsen, T. H., Moal, I. H., & Deane, C. M. (2024). AbLang2:
+    Addressing the Antibody Language Model Gap. bioRxiv.
+    Source: https://github.com/TobiasHeOl/AbLang2
+
+    Args:
+        sequence: Antibody amino acid sequence
+        binder_type: Binder type from config ("nb" for nanobody, "scfv" for single-chain Fv)
+        vh_first: Heavy chain first in scFv sequence
+        vh_len: Heavy chain length (0 for nanobodies)
+        vl_len: Light chain length (0 for nanobodies)
+
+    Returns:
+        float: Log-likelihood score (higher = more natural)
+    """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    is_scfv = binder_type.lower() == "scfv"
+
+    model_to_use = "ablang2-paired" if is_scfv else "ablang1-heavy"
+    model = ablang2.pretrained(
+        model_to_use=model_to_use, random_init=False, device=device
+    )
+    model.freeze()
+
+    # Build the sequence string (insert chain separator for scFv)
+    if is_scfv:
+        if vh_first:
+            seq_str = sequence[:vh_len] + "|" + sequence[-vl_len:]
+        else:
+            seq_str = sequence[:vl_len] + "|" + sequence[-vh_len:]
+    else:
+        seq_str = sequence
+
+    # Tokenize sequence using ablang vocabulary
+    token_ids = torch.tensor(
+        [ablang_vocab[aa] for aa in seq_str],
+        dtype=torch.long,
+        device=device,
+    ).unsqueeze(0)
+
+    # Forward pass (no gradients needed for scoring)
+    with torch.no_grad():
+        logits = model.AbLang(token_ids)
+
+    # Autoregressive cross-entropy loss (mirrors CustomAbLang.get_grad)
+    shift_logits = logits[:, :-1, :]
+    shift_labels = token_ids[:, 1:]
+    loss = F.cross_entropy(
+        shift_logits.reshape(-1, shift_logits.size(-1)),
+        shift_labels.reshape(-1),
+        reduction="none",
+    )
+    position_losses = loss.reshape(shift_labels.shape)
+    position_losses = position_losses[:, 1:-1]
+    log_likelihood = -position_losses.mean().item()
 
     return log_likelihood

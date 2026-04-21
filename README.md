@@ -27,6 +27,8 @@ We describe Germinal in the preprint: ["Efficient generation of epitope-targeted
    * [Target Configuration](#target-configuration)
    * [Filters Configuration](#filters-configuration)
    * [AF3 Configuration](#af3)
+   * [Protenix Configuration](#protenix)
+   * [Structure Score Selection Mode](#score-selection)
 - [Output Format](#output-format)
 - [Tips for Design](#tips-for-design)
 - [Designing against PD-L1 and IL3](#design-against-pdl1-il3)
@@ -303,6 +305,52 @@ af3_db_dir: "/path/to/alphafold3/databases"
 msa_db_dir: "/path/to/colabfold/databases"
 ```
 
+<!-- TOC --><a name="protenix"></a>
+### Protenix Configuration
+
+[Protenix](https://github.com/bytedance/Protenix) is an open-source reimplementation of AlphaFold 3 by ByteDance. It can be used as an alternative structure prediction backend alongside AF3 and Chai. **AF3 remains the recommended backend** — all published filter thresholds are calibrated against AF3 and Protenix has not been independently validated. Use Protenix when AF3 is not available (e.g. no Singularity/license access), but treat results as experimental.
+
+Protenix has dependencies that conflict with the main `germinal` environment, so it must be installed in a **separate conda environment**. The pipeline invokes it via `conda run -n <env>`.
+
+```bash
+conda create --name protenix python=3.10 && conda activate protenix && pip install protenix
+```
+
+Before running, download the model weights by following the [Protenix model download instructions](https://github.com/bytedance/Protenix?tab=readme-ov-file#model-weights). The `protenix_model_name` field must match the downloaded checkpoint name exactly.
+
+To use Protenix, set `structure_model: "protenix"` in your run config (or pass `structure_model=protenix` on the CLI) and configure the two required fields:
+
+```yaml
+protenix_conda_env: "protenix"                       # conda env with protenix installed
+protenix_model_name: "protenix_base_default_v1.0.0"  # model checkpoint name
+```
+
+Optional speed tuning parameters (can also be set via CLI): `protenix_use_msa` (default `true`), `protenix_samples` (default `5`), `protenix_cycles` (default `10`), `protenix_steps` (default `200`).
+
+> **`protenix_use_msa`**: Setting this to `false` skips Protenix's built-in MSA search (~3 min per prediction). For de novo antibody design there are typically no real homologs, so this is often acceptable for speed. However, disabling MSA may reduce confidence score accuracy — use `false` for faster runs and `true` when confidence quality is the priority.
+
+> **Known limitation**: When Protenix does not produce full PAE matrix output, interface metrics (`i_pae`, `i_plddt`) are unavailable and any filters on those metrics will be automatically passed. A warning is printed when this occurs.
+
+<!-- TOC --><a name="score-selection"></a>
+### Structure Score Selection Mode
+
+When using AF3 or Protenix, the structure predictor generates multiple samples per design. The `af3_structure_select_mode` setting controls which sample is used for scoring:
+
+```yaml
+af3_structure_select_mode: "best"   # or "worst"
+```
+
+- **`"best"`** (default): Use the top-ranked sample by ranking score. This is the standard AF3 behavior.
+- **`"worst"`**: Use the lowest-ranked sample by ranking score. This acts as a conservative filter -- only designs that score well even on their worst prediction will pass the pipeline thresholds.
+
+This can also be set from the command line:
+
+```bash
+python run_germinal.py af3_structure_select_mode=worst
+```
+
+> **Note:** This setting applies to both the AF3 and Protenix backends. It does not apply to Chai.
+
 <!-- TOC --><a name="multichain"></a>
 ### Multi-chain target input
 
@@ -347,7 +395,7 @@ During sampling, we typically run antibody generation until there are around 1,0
 
 Please consider that:
 
-- We strongly recommend use of [AF3](https://github.com/google-deepmind/alphafold3) for design filtering as done in the paper, as **filters are only calibrated for AF3 confidence metrics**. We are actively working to add Chai calibrated thresholds for commercial users. Until then, running Germinal with `structure_model: "chai"` and NOT `structure_model: "af3"` should be considered experimental and may have lower passing rates. Note that the current AF3 implementation assumes singularity for containerization. We are currently working on a Docker compatible wrapper, but if you need to run AF3 with Docker in the meantime, `_run_af3` in `germinal/filters/af3.py` holds the Singularity wrapper which should only need slight tweaks to run with Docker. More details on configuring AF3 are [here](#af3).
+- We strongly recommend use of [AF3](https://github.com/google-deepmind/alphafold3) for design filtering as done in the paper, as **filters are only calibrated for AF3 confidence metrics**. We are actively working to add Chai calibrated thresholds for commercial users. Until then, running Germinal with `structure_model: "chai"` and NOT `structure_model: "af3"` should be considered experimental and may have lower passing rates. [Protenix](https://github.com/bytedance/Protenix) (`structure_model: "protenix"`) is also supported as a third structure prediction backend. Since Protenix is an open-source reimplementation of AF3, its confidence metrics may be similar in nature, but filter thresholds have not been independently validated against Protenix outputs and this option should be considered experimental. See the [Protenix Configuration](#protenix) section for setup instructions. Note that the current AF3 implementation assumes singularity for containerization. We are currently working on a Docker compatible wrapper, but if you need to run AF3 with Docker in the meantime, `_run_af3` in `germinal/filters/af3.py` holds the Singularity wrapper which should only need slight tweaks to run with Docker. More details on configuring AF3 are [here](#af3).
 - While nanobody design is fully functional and validated experimentally, the configs and filters for scFvs remain preliminary; this functionality should therefore still be regarded as experimental.
 - As recommended in the preprint, we suggest performing a small parameter sweep before launching full sampling runs. This is especially important when working with a new target or selecting a new epitope. In `configs/run/vhh_pdl1.yaml` and `configs/run/vhh_il3.yaml`, we provide the parameters that we used for PD-L1 and IL3 nanobody generations in the pre-print. We also include the filters used for these runs under `configs/filter/initial/` and `configs/filter/final/`. In `configs/run/vhh.yaml` and `configs/run/scfv.yaml` we provide a set of reasonable default parameters that we used as a starting point for parameter exploration and sweep experiments (see below **Important Notes and Tips for Design** for more details). One important distinction is that the structure model in the default nanobody configuration is `chai` instead of `af3` in order to allow users to run the pipeline with no additional setup. Note that final sampling runs in the preprint all used slightly modified parameters. Parameters can be configured from the command line. For example, you can set `weights_beta` and `weights_plddt` with the following command:
 
@@ -449,6 +497,7 @@ If you use components of this pipeline, please also cite the underlying methods:
 - **IgLM**: [https://github.com/Graylab/IgLM](https://github.com/Graylab/IgLM)
 - **Chai-1**: [https://github.com/chaidiscovery/chai-lab](https://github.com/chaidiscovery/chai-lab)
 - **AlphaFold3**: [https://github.com/google-deepmind/alphafold3](https://github.com/google-deepmind/alphafold3)
+- **Protenix**: [https://github.com/bytedance/Protenix](https://github.com/bytedance/Protenix)
 - **AbMPNN**: [Dreyer, F. A., Cutting, D., Schneider, C., Kenlay, H. & Deane, C. M. Inverse folding for
 antibody sequence design using deep learning. (2023).](https://www.biorxiv.org/content/10.1101/2025.05.09.653228v1.full.pdf)
 - **PyRosetta**: [https://www.pyrosetta.org/](https://www.pyrosetta.org/)

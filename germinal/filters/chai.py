@@ -90,13 +90,16 @@ def run_chai(
             - scores_dict (dict): Confidence metrics and scores
     """
     # Create temporary directory structure for Chai-1 processing
-    Path(os.path.join(output_dir, "tmp")).mkdir(exist_ok=True)
+    # Use a unique base name to avoid permission conflicts on shared systems
+    chai_tmp_base = Path(os.path.join(output_dir, "germinal_chai"))
+    chai_tmp_base.mkdir(exist_ok=True)
     # Generate unique identifier to avoid conflicts with concurrent runs
     hash_id = generate_unique_hash()
 
     # Create unique temporary directory (must not exist to avoid conflicts)
-    Path(os.path.join(output_dir, "tmp", hash_id)).mkdir(exist_ok=False)
-    fasta_path = Path(os.path.join(output_dir, "tmp", hash_id, "example.fasta"))
+    tmp_dir = chai_tmp_base / hash_id
+    tmp_dir.mkdir(exist_ok=False)
+    fasta_path = tmp_dir / "example.fasta"
 
     # Extract protein sequences from input PDB file
     sequences = get_sequence_from_pdb(pdb)
@@ -111,7 +114,7 @@ def run_chai(
         fh.write(binder_sequence + "\n")
 
     # Create empty output directory (required by Chai-1 inference)
-    output_dir = Path(os.path.join(output_dir, "tmp", hash_id, "outputs"))
+    output_dir = tmp_dir / "outputs"
     output_dir.mkdir(exist_ok=False)
 
     constraint = False
@@ -175,7 +178,7 @@ def run_chai(
     shutil.copy(pdb_path, save_dir)
     new_path = os.path.join(save_dir, pdb_path.split("/")[-1])
 
-    shutil.rmtree(os.path.join(output_dir, "tmp", hash_id), ignore_errors=True)
+    shutil.rmtree(str(tmp_dir), ignore_errors=True)
 
     return new_path, scores_dict
 
