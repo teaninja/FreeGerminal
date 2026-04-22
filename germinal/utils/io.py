@@ -46,7 +46,7 @@ TRAJECTORY_METRICS_TO_SAVE = [
     "i_pae",
     "pae",
     "loss",
-    "ablm_ll",
+    "lm_ll",
     "helix",
     "beta_strand",
 ]

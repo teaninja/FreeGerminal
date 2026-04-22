@@ -92,6 +92,8 @@ def germinal_design(
     vl_len = run_settings.get("vl_len", None)
     iglm_species = run_settings.get("iglm_species", "[HUMAN]")
     ablm_model = run_settings.get("ablm_model", "iglm")
+    ablm_method = run_settings.get("ablm_method", "pll")
+    ablm_device = run_settings.get("ablm_device", None)
     dimer = target_settings.get("dimer", False)
     save_filters = {
         "plddt": run_settings.get("plddt_threshold", 0.84),
@@ -160,6 +162,8 @@ def germinal_design(
         optimizer=optimizer,
         ablm_temp=ablm_temp,
         ablm_model=ablm_model,
+        ablm_method=ablm_method,
+        ablm_device=ablm_device,
         iglm_species=iglm_species,
         vl_len=vl_len,
         vh_first=vh_first,
@@ -848,7 +852,7 @@ def log_trajectory(af_model, design_name, io):
         "i_pae",
         "helix",
         "beta_strand",
-        "ablm_ll",
+        "lm_ll",
         "i_plddt",
     ]
 
@@ -895,8 +899,8 @@ def plot_trajectory(af_model, design_name, io):
         Currently focuses on overall loss and AbLM likelihood metrics. Additional
         metrics can be enabled by modifying the metrics_to_plot list.
     """
-    # metrics_to_plot = ['loss', 'plddt', 'ptm', 'i_ptm', 'con', 'i_con', 'pae', 'i_pae', 'helix', 'beta_strand3', 'ablm_ll']
-    metrics_to_plot = ["loss", "ablm_ll"]
+    # metrics_to_plot = ['loss', 'plddt', 'ptm', 'i_ptm', 'con', 'i_con', 'pae', 'i_pae', 'helix', 'beta_strand3', 'lm_ll']
+    metrics_to_plot = ["loss", "lm_ll"]
     colors = ["b", "g", "r", "c", "m", "y", "k"]
 
     for index, metric in enumerate(metrics_to_plot):
@@ -927,10 +931,10 @@ def plot_trajectory(af_model, design_name, io):
                 dpi=150,
             )
             # save loss values if ablm ll
-            if metric == "ablm_ll":
+            if metric == "lm_ll":
                 with open(
                     os.path.join(
-                        io.layout.trajectories, "plots", design_name + "_ablm_ll.txt"
+                        io.layout.trajectories, "plots", design_name + "_lm_ll.txt"
                     ),
                     "w",
                 ) as f:
