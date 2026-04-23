@@ -68,6 +68,9 @@ def run_chai(
     hotspot_residue = None,
     binder_chain = "B",
     target_len: int = None,
+    num_trunk_recycles: int = 3,
+    num_diffn_timesteps: int = 200,
+    use_esm_embeddings: bool = True,
 ):
     """
     Run Chai-1 structure prediction for antibody-target complex.
@@ -83,6 +86,12 @@ def run_chai(
         pdb (str): Path to PDB file containing the target protein structure.
         target_chain (str, optional): Chain ID of target protein. Defaults to 'A'.
         seed (int, optional): Random seed for reproducible predictions. Defaults to 0.
+        num_trunk_recycles (int, optional): Structure refinement cycles.
+            Defaults to 3.
+        num_diffn_timesteps (int, optional): Diffusion sampling steps.
+            Defaults to 200.
+        use_esm_embeddings (bool, optional): Use ESM language model embeddings.
+            Defaults to True.
 
     Returns:
         tuple: (structure_path, scores_dict) where:
@@ -120,22 +129,27 @@ def run_chai(
     constraint = False
     if cdr3_idx is not None and hotspot_residue is not None:
         constraint = True
-        constraint_path = Path(__file__).with_name("chai.restraints")
-        rests_df = pd.read_csv(constraint_path)
+        # Read the master restraints template, populate per-run values, and
+        # write to a fresh copy inside tmp_dir. Never mutate the tracked
+        # source file — concurrent runs would otherwise race on it and
+        # corrupt a committed file.
+        master_restraints = Path(__file__).with_name("chai.restraints")
+        rests_df = pd.read_csv(master_restraints)
         rest_residue = binder_sequence[cdr3_idx]
         rests_df.loc[0, 'chainB'] = binder_chain
         rests_df.loc[0, 'res_idxB'] = f'{rest_residue}{cdr3_idx}'
         rests_df.loc[0, 'res_idxA'] = hotspot_residue
+        constraint_path = tmp_dir / "chai.restraints"
         rests_df.to_csv(constraint_path, index=False)
 
     # Run Chai-1 structure prediction with optimized parameters
     candidates = run_inference(
         fasta_file=fasta_path,
         output_dir=output_dir,
-        num_trunk_recycles=3,  # Number of structure refinement cycles
-        num_diffn_timesteps=200,  # Diffusion sampling steps
-        device="cuda:0",  # GPU device for acceleration
-        use_esm_embeddings=True,  # Use ESM language model embeddings
+        num_trunk_recycles=num_trunk_recycles,
+        num_diffn_timesteps=num_diffn_timesteps,
+        device="cuda:0",  # Index 0 of CUDA_VISIBLE_DEVICES
+        use_esm_embeddings=use_esm_embeddings,
         seed=seed,  # Random seed for reproducibility
         constraint_path = constraint_path if constraint else None,  # Path to restraints file
     )
