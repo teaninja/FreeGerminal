@@ -105,9 +105,12 @@ def run_chai(
     # Generate unique identifier to avoid conflicts with concurrent runs
     hash_id = generate_unique_hash()
 
-    # Create unique temporary directory (must not exist to avoid conflicts)
+    # Create unique temporary directory. exist_ok=True: hash collisions are
+    # possible on a shared scheduler and killing a trajectory for that is
+    # harsher than the (unlikely) file-write race. Per-run files written
+    # below are disjoint-per-design and overwritten idempotently.
     tmp_dir = chai_tmp_base / hash_id
-    tmp_dir.mkdir(exist_ok=False)
+    tmp_dir.mkdir(exist_ok=True)
     fasta_path = tmp_dir / "example.fasta"
 
     # Extract protein sequences from input PDB file
@@ -122,20 +125,24 @@ def run_chai(
         fh.write(">protein|name=binder_protein\n")
         fh.write(binder_sequence + "\n")
 
-    # Create empty output directory (required by Chai-1 inference)
+    # Create empty output directory (required by Chai-1 inference).
+    # exist_ok=True for the same reason as tmp_dir above.
     output_dir = tmp_dir / "outputs"
-    output_dir.mkdir(exist_ok=False)
+    output_dir.mkdir(exist_ok=True)
 
     constraint = False
     if cdr3_idx is not None and hotspot_residue is not None:
         constraint = True
+        # cdr3_idx is 1-indexed (PDB residue number, matches the chai
+        # restraint template format like "L13"). binder_sequence is
+        # 0-indexed Python string, so subtract 1 to read the AA letter.
         # Read the master restraints template, populate per-run values, and
         # write to a fresh copy inside tmp_dir. Never mutate the tracked
         # source file — concurrent runs would otherwise race on it and
         # corrupt a committed file.
         master_restraints = Path(__file__).with_name("chai.restraints")
         rests_df = pd.read_csv(master_restraints)
-        rest_residue = binder_sequence[cdr3_idx]
+        rest_residue = binder_sequence[cdr3_idx - 1]
         rests_df.loc[0, 'chainB'] = binder_chain
         rests_df.loc[0, 'res_idxB'] = f'{rest_residue}{cdr3_idx}'
         rests_df.loc[0, 'res_idxA'] = hotspot_residue
@@ -180,7 +187,7 @@ def run_chai(
     )  # Average pLDDT for binder only
     scores_dict["binder_pae"] = torch.mean(
         torch.mean(pae[target_len:, target_len:])
-    )  # Average PAE for binder-target interface
+    )  # Average PAE within binder chain
     scores_dict["chain_ptm"] = [1] #placeholder values for chai
     scores_dict["chain_iptm"] = [1] #placeholder values for chai
 

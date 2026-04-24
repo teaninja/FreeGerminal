@@ -233,16 +233,19 @@ def idx_from_ranges(ranges, chain="B", offset=0):
         list: Zero-based indices corresponding to the specified ranges
     """
     rows = []
+    if not ranges:
+        return rows
     ranges = ranges.replace(chain, "")
     for part in ranges.split(","):
+        if not part:
+            continue
         if part[0].isalpha():
             continue
+        if "-" in part:
+            start, end = map(int, part.split("-"))
+            rows.extend(range(start + offset - 1, end + offset))
         else:
-            if "-" in part:
-                start, end = map(int, part.split("-"))
-                rows.extend(range(start + offset - 1, end + offset))
-            else:
-                rows.append(int(part) + offset - 1)
+            rows.append(int(part) + offset - 1)
     return rows
 
 
@@ -953,6 +956,12 @@ def interface_cdrs(interface: str, cdrs: list, cdr3: list, binder_chain="B"):
     interface = idx_from_ranges(interface, chain=binder_chain)
     # cdrs = idx_from_ranges(cdrs)
     # cdr3 = idx_from_ranges(cdr3)
+
+    # Empty interface (no contacts detected) — return zeros instead of
+    # raising ZeroDivisionError, which would kill the trajectory after
+    # structure prediction completed and waste the upstream compute.
+    if len(interface) == 0:
+        return 0.0, 0.0
 
     common_elements = []
     common_elems_cdr3 = []

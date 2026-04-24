@@ -98,6 +98,7 @@ def run_filters(
         target_len=target_len,
         select_mode=select_mode,
         af3_seed_size=af3_seed_size,
+        h3_positions=h3_positions,
     )
 
     # ========================== FastRelax ==========================
@@ -205,14 +206,21 @@ def run_filters(
             external_pdb=external_pdb,
             external_metrics=external_metrics,
             binder_chain=binder_chain,
+            ipsae=ipsae,
         )
         i_pae = pDockQ2_out["ifpae_norm"].mean()
         i_plddt = pDockQ2_out["ifplddt"].mean() / 100
     else:
         # PAE matrix not available (e.g. Protenix without full_data output).
-        # Use ipsae values if available, otherwise defaults.
-        pdockq_metrics = {"pDockQ2": ipsae["pdockq2"] if ipsae else 0.0}
-        lis_metrics = {"lis": ipsae.get("LIS", 0.0) if ipsae else 0.0, "lia": 0.0}
+        # Use ipsae values if available, otherwise None (fail-closed via
+        # the new evaluate_filters None handling).
+        pdockq_metrics = {
+            "pDockQ2": ipsae["pdockq2"] if ipsae is not None else None,
+        }
+        lis_metrics = {
+            "lis": ipsae.get("LIS") if ipsae is not None else None,
+            "lia": None,
+        }
         pDockQ2_out = None
         i_pae = None
         i_plddt = None
@@ -229,7 +237,11 @@ def run_filters(
         "aggregate_score": external_metrics["aggregate_score"][0],
         "i_pae": i_pae,
         "i_plddt": i_plddt,
-        "binder_pae": external_metrics["binder_pae"].item(),
+        "binder_pae": (
+            external_metrics["binder_pae"].item()
+            if external_metrics["binder_pae"] is not None
+            else None
+        ),
         "ipsae":ipsae
     }
 
@@ -259,7 +271,11 @@ def run_filters(
         binder_rmsd = 100
 
     # ========================== Get Log-likelihood from AbLM ==========================
-    if run_settings["ablm_model"] == "iglm":
+    # Default to "iglm" if config omits the key (e.g. older configs like
+    # vhh_il3.yaml). Without this, run_settings["ablm_model"] raises KeyError
+    # and crashes the whole trajectory at the LM-likelihood step.
+    ablm_model_name = run_settings.get("ablm_model", "iglm")
+    if ablm_model_name == "iglm":
         lm_ll = get_iglm_ll(
             sequence=trajectory_sequence,
             species_token=run_settings["iglm_species"],
@@ -267,7 +283,7 @@ def run_filters(
             vh_len=run_settings["vh_len"],
             vl_len=run_settings["vl_len"],
         )
-    elif run_settings["ablm_model"] == "ablang":
+    elif ablm_model_name == "ablang":
         lm_ll = get_ablang_ll(
             sequence=trajectory_sequence,
             vh_first=run_settings["vh_first"],
@@ -275,8 +291,18 @@ def run_filters(
             vl_len=run_settings["vl_len"],
         )
     else:
-        lm_ll = -1
-        print(f"Warning: {run_settings['ablm_model']} not recognized, skipping LL")
+        # Sentinel value chosen to be far outside the realistic lm_ll range
+        # (~-2 to 0) so it visibly fails any reasonable threshold filter and
+        # is unmistakable in CSV output. Using None would trigger fail-loud
+        # for every design — too aggressive for a config typo. Using -1 was
+        # too easy to confuse with a legitimately-bad lm_ll value.
+        lm_ll = -100
+        print(
+            f"\n\n[CONFIG ERROR] ablm_model={ablm_model_name!r} "
+            f"not recognized (expected 'iglm' or 'ablang'). Setting lm_ll=-100 "
+            f"as a sentinel; any lm_ll filter will reject this design.\n\n",
+            flush=True,
+        )
 
     # ========================== Aggregate Filter Metrics ==========================
     filter_metrics = build_filter_metrics(
@@ -448,11 +474,20 @@ def evaluate_filters(
         operator = filter_config["operator"]
 
         if metric_value is None:
-            # Known limitation: i_pae and i_plddt are None when the structure predictor
-            # does not return a full PAE matrix (e.g. Protenix without full_data output).
-            # Filters on these metrics are skipped rather than failing the design.
-            print(f"\n\nWarning: Metric '{filter_name}' is None, passing filter {filter_name}!!\n\n")
-            passed = True
+            # Fail-closed: a None metric means the structure predictor did not
+            # produce the data needed to evaluate this filter (e.g. Protenix
+            # without full_data → i_pae/i_plddt are None). Silently passing
+            # would let designs through that were never actually checked.
+            # Loudly fail the filter instead.
+            print(
+                f"\n\n[FILTER ERROR] Metric '{filter_name}' is None — cannot "
+                f"evaluate filter ({operator} {threshold}). FAILING this filter "
+                f"(was previously silently passed). To restore old behavior, "
+                f"either remove '{filter_name}' from the filter set or fix the "
+                f"upstream data source so the metric is populated.\n\n",
+                flush=True,
+            )
+            passed = False
         elif operator == "<":
             passed = metric_value < threshold
         elif operator == "<=":
@@ -552,6 +587,7 @@ def run_structure_prediction(
     hotspot_residue = None,
     select_mode: str = "best",
     af3_seed_size: int = 5,
+    h3_positions = None,
 ) -> Tuple[str, dict, Optional[dict]]:
     """
     Run AF3 or Chai structure prediction for antibody-target complex.
@@ -585,8 +621,17 @@ def run_structure_prediction(
         )
     elif run_settings["structure_model"] == "chai":
 
-        cdr3_idx = run_settings["cdr_positions"][run_settings["cdr_lengths"][0] + run_settings["cdr_lengths"][1]:]
-        cdr3_idx = cdr3_idx[len(cdr3_idx)//2]
+        # Use h3_positions computed by run_filters (PR #67 3-way branch
+        # correctly handles nb / VH-first scFv / VL-first scFv). The old
+        # hardcoded slice mis-sliced VL-first scFv runs (landed on H1/H2).
+        # cdr3_idx passed to chai must be 1-indexed (PDB residue numbers,
+        # matching the chai.restraints template format like "L13", "D108").
+        # h3_positions is 0-indexed, hence the +1.
+        if h3_positions is not None:
+            cdr3_idx = h3_positions[len(h3_positions)//2] + 1
+        else:
+            cdr3_idx = run_settings["cdr_positions"][run_settings["cdr_lengths"][0] + run_settings["cdr_lengths"][1]:]
+            cdr3_idx = cdr3_idx[len(cdr3_idx)//2] + 1
 
         external_pdb, external_metrics = chai.run_chai(
             trajectory_sequence,
@@ -700,33 +745,46 @@ def compute_pdockq_and_lis(
     external_pdb: str,
     external_metrics: dict,
     binder_chain: str,
+    ipsae: Optional[dict] = None,
 ) -> Tuple[dict, dict, dict]:
     """
-    Compute docking quality metrics: pDockQ, pDockQ2, LIS, LIA (0-1 scale, higher=better).
+    Compute docking quality metrics.
+
+    pDockQ2 and LIS now come exclusively from the upstream ``ipsae`` tool
+    (single scalar each), avoiding the chain-keying bug in the old
+    pDockQ.pDockQ2 per-chain aggregation that produced wrong values for
+    ≥3-chain complexes. The pDockQ2 module is still called once to obtain
+    the per-residue ``ifpae_norm`` / ``ifplddt`` arrays which feed the
+    interface-PAE and interface-pLDDT metrics (i_pae / i_plddt) — these
+    arrays are not affected by the chain-key bug.
+
+    LIA is no longer computed (ipsae does not produce it); set to None
+    so any filter on lis_lia will fail-loud rather than silently pass.
 
     Args:
         external_pdb: Complex PDB path
         external_metrics: Metrics with PAE matrix
+        binder_chain: Binder chain id (kept for signature compatibility;
+            no longer used in selection now that ipsae provides the scalar)
+        ipsae: ipsae output dict with keys {ipsae, pdockq2, LIS}; None if
+            the ipsae tool failed or full_data was unavailable.
 
     Returns:
         Tuple[dict, dict, dict]: (pdockq_metrics, lis_metrics, pDockQ2_out)
     """
     external_pae = external_metrics["pae_matrix"]
-    pDockQ2_out, chain_specific_pdockq2 = pDockQ.pDockQ2(external_pdb, external_pae)
-    pDockQ2 = []
+    # pDockQ2_out (DataFrame) is still needed for ifpae_norm / ifplddt;
+    # discard the buggy chain_specific_pdockq2 dict entirely.
+    pDockQ2_out, _ = pDockQ.pDockQ2(external_pdb, external_pae)
 
-    for i in chain_specific_pdockq2.keys():
-        if binder_chain in i:
-            pDockQ2.append(chain_specific_pdockq2[i][-1])
-
+    # Use ipsae's pDockQ2 scalar directly. None when ipsae unavailable so
+    # downstream filter evaluation fails-loud rather than silently passes.
     pdockq_metrics = {
-        "pDockQ2": np.mean(pDockQ2),
+        "pDockQ2": ipsae["pdockq2"] if ipsae is not None else None,
     }
-
-    raw_lis_metrics = pDockQ.calculate_lis(external_pdb, external_pae)
     lis_metrics = {
-        "lis": np.mean([raw_lis_metrics["LIS"][0, 1], raw_lis_metrics["LIS"][1, 0]]),
-        "lia": np.mean([raw_lis_metrics["LIA"][0, 1], raw_lis_metrics["LIA"][1, 0]]),
+        "lis": ipsae.get("LIS") if ipsae is not None else None,
+        "lia": None,  # ipsae does not compute LIA; no longer derived locally
     }
 
     return pdockq_metrics, lis_metrics, pDockQ2_out
