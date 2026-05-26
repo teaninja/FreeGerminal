@@ -91,7 +91,7 @@ def germinal_design(
     vh_first = run_settings.get("vh_first", True)
     vl_len = run_settings.get("vl_len", None)
     iglm_species = run_settings.get("iglm_species", "[HUMAN]")
-    ablm_model = run_settings.get("ablm_model", "iglm")
+    ablm_model = run_settings.get("ablm_model", "ablang")
     ablm_method = run_settings.get("ablm_method", "pll")
     ablm_device = run_settings.get("ablm_device", None)
     dimer = target_settings.get("dimer", False)

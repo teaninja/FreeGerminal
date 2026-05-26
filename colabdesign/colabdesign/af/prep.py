@@ -13,7 +13,10 @@ from colabdesign.shared.prep import prep_pos
 from colabdesign.shared.utils import copy_dict
 from colabdesign.shared.model import order_aa
 
-from colabdesign.iglm.model import CustomIgLM
+try:
+    from colabdesign.iglm.model import CustomIgLM
+except ImportError:
+    CustomIgLM = None
 from colabdesign.ablang.model import CustomAbLang
 
 resname_to_idx = residue_constants.resname_to_idx

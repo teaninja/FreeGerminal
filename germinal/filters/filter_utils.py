@@ -14,7 +14,13 @@ from ablang2.models.ablang2.vocab import ablang_vocab
 from iglm import IgLM
 from colabdesign.ablang.model import CustomAbLang
 from germinal.utils import utils
-from germinal.filters import af3, chai, protenix, pDockQ, pyrosetta_utils
+from germinal.filters import af3, chai, protenix, pDockQ
+try:
+    from germinal.filters import pyrosetta_free_utils as pyrosetta_utils
+    print("[filter_utils] Using PyRosetta-free backend (OpenMM + Biopython)")
+except ImportError:
+    from germinal.filters import pyrosetta_utils
+    print("[filter_utils] Using PyRosetta backend")
 from germinal.utils.io import IO, Trajectory
 
 
