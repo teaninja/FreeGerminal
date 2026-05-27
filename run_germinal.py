@@ -5,7 +5,10 @@ Run Germinal for Antibody design.
 import time
 from omegaconf import DictConfig
 import hydra
-import pyrosetta as pr
+try:
+    import pyrosetta as pr
+except ImportError:
+    pr = None
 import numpy as np
 import torch
 
@@ -29,12 +32,13 @@ def main(cfg: DictConfig):
     )
 
     io.save_run_config(run_settings, target_settings)
-    # initialize pyrosetta
-    pr.init(
-        f"-ignore_unrecognized_res -ignore_zero_occupancy -mute all "
-        f"-holes:dalphaball {run_settings['dalphaball_path']} "
-        f"-corrections::beta_nov16 true -relax:default_repeats 1"
-    )
+    # initialize pyrosetta (optional, skipped in PyRosetta-free mode)
+    if pr is not None:
+        pr.init(
+            f"-ignore_unrecognized_res -ignore_zero_occupancy -mute all "
+            f"-holes:dalphaball {run_settings['dalphaball_path']} "
+            f"-corrections::beta_nov16 true -relax:default_repeats 1"
+        )
     print(f"============================\nExperiment name: {run_settings['experiment_name']}\n============================")
     print(f"Processed config: {target_settings}\n{initial_filters}\n{final_filters}")
 
