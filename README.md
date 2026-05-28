@@ -167,7 +167,7 @@ Tested on UVA Rivanna HPC (NVIDIA A100 80GB) against original Germinal (commit `
 
 ## License
 
-FreeGerminal code modifications are released under the **MIT License**.
+FreeGerminal code modifications are released under the **Apache 2.0 License**.
 
 This repository builds upon:
 - [Germinal](https://github.com/SantiagoMille/germinal) (MIT) — Mille-Fragoso et al., 2025
