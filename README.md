@@ -161,7 +161,7 @@ Tested on NVIDIA A100 80GB against original Germinal (commit `88d7f85`).
 
 > **For full methods, benchmark details, and analysis, see the accompanying paper (preprint coming soon).**
 
-> Trajectory counts differ because FreeGerminal jobs experienced intermittent cluster node failures unrelated to the pipeline. Per-trajectory runtime is ~60% slower due to OpenMM relaxation replacing PyRosetta FastRelax; FASPR sidechain repacking is included.
+> Per-trajectory runtime is ~60% slower due to OpenMM relaxation replacing PyRosetta FastRelax; FASPR sidechain repacking is included.
 
 ---
 
