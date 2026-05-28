@@ -1,6 +1,6 @@
 # FreeGerminal
 
-**A commercially permissive implementation of the [Germinal](https://github.com/SantiagoMille/germinal) VHH antibody design pipeline.**
+**A commercially permissive implementation of the [Germinal](https://github.com/SantiagoMille/germinal) antibody design pipeline (VHH nanobodies and scFv).**
 
 FreeGerminal replaces the two non-commercial dependencies in Germinal — PyRosetta and IgLM — with fully open-source, commercially licensed alternatives, enabling the pipeline to be used in academic and commercial settings without licensing barriers.
 
