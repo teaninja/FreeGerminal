@@ -148,7 +148,7 @@ apptainer exec --nv \
 
 ## Benchmark
 
-Tested on UVA Rivanna HPC (NVIDIA A100 80GB) against original Germinal (commit `88d7f85`).
+Tested on NVIDIA A100 80GB against original Germinal (commit `88d7f85`).
 
 | Metric | Original Germinal | FreeGerminal v1.0.0 |
 |---|---|---|
@@ -170,7 +170,7 @@ Tested on UVA Rivanna HPC (NVIDIA A100 80GB) against original Germinal (commit `
 FreeGerminal code modifications are released under the **Apache 2.0 License**.
 
 This repository builds upon:
-- [Germinal](https://github.com/SantiagoMille/germinal) (MIT) — Mille-Fragoso et al., 2025
+- [Germinal](https://github.com/SantiagoMille/germinal) (Apache 2.0) — Mille-Fragoso et al., 2025
 - [FreeBindCraft](https://github.com/cytokineking/FreeBindCraft) (Apache 2.0) — Ring, 2025
 - [AbLang2](https://github.com/oxpig/AbLang2) (Apache 2.0) — Oxford Protein Informatics Group
 - [OpenMM](https://openmm.org) (MIT)
