@@ -40,7 +40,7 @@ i_pae_threshold: 0.27
 seq_entropy_threshold: 0.10
 
 # IgLM settings
-ablm_model: "iglm"
+ablm_model: "ablang"
 grad_merge_method: "pcgrad"
 ablm_scale: [0.2, 0.4, 0.4, 1.0]
 ablm_temp: 0.6

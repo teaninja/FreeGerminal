@@ -41,7 +41,7 @@ seq_entropy_threshold: 0.10
 
 # IgLM settings
 grad_merge_method: "pcgrad"
-ablm_model: "iglm"                  # "iglm" or "ablang"
+ablm_model: "ablang"                  # "iglm" or "ablang"
 ablm_scale: [0.0, 0.2, 0.4, 1.0]
 ablm_temp: 0.6
 iglm_species: "[HUMAN]"

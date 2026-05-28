@@ -280,7 +280,7 @@ def run_filters(
     # Default to "iglm" if config omits the key (e.g. older configs like
     # vhh_il3.yaml). Without this, run_settings["ablm_model"] raises KeyError
     # and crashes the whole trajectory at the LM-likelihood step.
-    ablm_model_name = run_settings.get("ablm_model", "iglm")
+    ablm_model_name = run_settings.get("ablm_model", "ablang")
     if ablm_model_name == "iglm":
         lm_ll = get_iglm_ll(
             sequence=trajectory_sequence,
@@ -480,20 +480,21 @@ def evaluate_filters(
         operator = filter_config["operator"]
 
         if metric_value is None:
-            # Fail-closed: a None metric means the structure predictor did not
-            # produce the data needed to evaluate this filter (e.g. Protenix
-            # without full_data → i_pae/i_plddt are None). Silently passing
-            # would let designs through that were never actually checked.
-            # Loudly fail the filter instead.
-            print(
-                f"\n\n[FILTER ERROR] Metric '{filter_name}' is None — cannot "
-                f"evaluate filter ({operator} {threshold}). FAILING this filter "
-                f"(was previously silently passed). To restore old behavior, "
-                f"either remove '{filter_name}' from the filter set or fix the "
-                f"upstream data source so the metric is populated.\n\n",
-                flush=True,
-            )
-            passed = False
+            # pdockq2 is not available when using Chai-1 (no PAE matrix).
+            # Silently pass to match original Germinal behavior with Chai-1.
+            # All other None metrics are fail-closed.
+            if filter_name == "pdockq2":
+                passed = True
+            else:
+                print(
+                    f"\n\n[FILTER ERROR] Metric '{filter_name}' is None — cannot "
+                    f"evaluate filter ({operator} {threshold}). FAILING this filter "
+                    f"(was previously silently passed). To restore old behavior, "
+                    f"either remove '{filter_name}' from the filter set or fix the "
+                    f"upstream data source so the metric is populated.\n\n",
+                    flush=True,
+                )
+                passed = False
         elif operator == "<":
             passed = metric_value < threshold
         elif operator == "<=":
