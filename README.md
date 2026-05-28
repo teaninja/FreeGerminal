@@ -159,6 +159,8 @@ Tested on UVA Rivanna HPC (NVIDIA A100 80GB) against original Germinal (commit `
 | IgLM required | ✅ Yes | ❌ No |
 | Commercial use | ⚠️ License required | ✅ Free |
 
+> **For full methods, benchmark details, and analysis, see the accompanying paper (preprint coming soon).**
+
 > Trajectory counts differ because FreeGerminal jobs experienced intermittent cluster node failures unrelated to the pipeline. Per-trajectory runtime is ~60% slower due to OpenMM relaxation replacing PyRosetta FastRelax; FASPR sidechain repacking is included.
 
 ---
