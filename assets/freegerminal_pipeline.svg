@@ -58,16 +58,16 @@
   <!-- ============================================================ -->
   <!-- STAGE 2 -->
   <!-- ============================================================ -->
-  <text x="460" y="272" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#555" letter-spacing="1">STAGE 2 — INITIAL STRUCTURE FILTER</text>
+  <text x="460" y="272" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#555" letter-spacing="1">STAGE 2 — INITIAL COFOLDING FILTER</text>
   <line x1="80" y1="277" x2="355" y2="277" stroke="#ccc" stroke-width="0.8"/>
   <line x1="565" y1="277" x2="840" y2="277" stroke="#ccc" stroke-width="0.8"/>
 
   <rect x="30" y="284" width="375" height="38" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
-  <text x="217" y="299" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">AF-Multimer (cofolding)</text>
-  <text x="217" y="314" text-anchor="middle" font-size="9.5" fill="#1976d2">iPTM / pLDDT threshold filter</text>
+  <text x="217" y="299" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 (initial filter, 3 seeds)</text>
+  <text x="217" y="314" text-anchor="middle" font-size="9.5" fill="#1976d2">iPTM / pLDDT threshold · 3 seeds (faster screening)</text>
 
   <rect x="515" y="284" width="375" height="38" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
-  <text x="702" y="299" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">AF-Multimer (cofolding)</text>
+  <text x="702" y="299" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 (initial filter, 3 seeds)</text>
   <text x="702" y="314" text-anchor="middle" font-size="9.5" fill="#1976d2">Unchanged · CC BY 4.0</text>
   <text x="460" y="308" text-anchor="middle" font-size="16" fill="#bbb">→</text>
 
@@ -135,11 +135,11 @@
 
   <!-- Chai-1 final -->
   <rect x="30" y="578" width="375" height="36" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
-  <text x="217" y="593" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final validation)</text>
+  <text x="217" y="593" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final filter, 5 seeds)</text>
   <text x="217" y="609" text-anchor="middle" font-size="9.5" fill="#1976d2">sc-RMSD · iPTM · pLDDT · pAE · filter thresholds</text>
 
   <rect x="515" y="578" width="375" height="36" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
-  <text x="702" y="593" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final validation)</text>
+  <text x="702" y="593" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final filter, 5 seeds)</text>
   <text x="702" y="609" text-anchor="middle" font-size="9.5" fill="#1976d2">Unchanged · Apache 2.0</text>
   <text x="460" y="601" text-anchor="middle" font-size="16" fill="#bbb">→</text>
 
