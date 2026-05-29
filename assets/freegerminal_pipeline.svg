@@ -24,7 +24,7 @@
   <!-- AF-Multimer -->
   <rect x="30" y="116" width="375" height="38" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
   <text x="217" y="131" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">AF-Multimer</text>
-  <text x="217" y="146" text-anchor="middle" font-size="9.5" fill="#1976d2">Structure prediction · confidence scores as gradient source</text>
+  <text x="217" y="146" text-anchor="middle" font-size="9.5" fill="#1976d2">Structure prediction · pLDDT / iPTM / PAE loss</text>
 
   <rect x="515" y="116" width="375" height="38" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
   <text x="702" y="131" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">AF-Multimer</text>
@@ -80,7 +80,7 @@
 
   <rect x="30" y="352" width="375" height="38" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
   <text x="217" y="367" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">AbMPNN</text>
-  <text x="217" y="382" text-anchor="middle" font-size="9.5" fill="#1976d2">Non-hotspot CDR residue redesign</text>
+  <text x="217" y="382" text-anchor="middle" font-size="9.5" fill="#1976d2">CDR residue redesign (framework &amp; interface residues fixed)</text>
 
   <rect x="515" y="352" width="375" height="38" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
   <text x="702" y="367" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">AbMPNN</text>
@@ -121,7 +121,7 @@
   <text x="702" y="451" text-anchor="middle" font-size="8.5" fill="#388e3c">✓ MIT / Apache 2.0 / LGPL — no commercial license required</text>
   <line x1="535" y1="458" x2="870" y2="458" stroke="#c8e6c9" stroke-width="0.8"/>
   <text x="535" y="472" font-size="9.5" fill="#1b5e20">• OpenMM + FASPR</text>
-  <text x="660" y="472" font-size="9" fill="#555">L-BFGS + OBC2 implicit solvent · sidechain repack</text>
+  <text x="660" y="472" font-size="9" fill="#555">L-BFGS minimization · OBC2 implicit solvent · sidechain repack</text>
   <text x="535" y="488" font-size="9.5" fill="#1b5e20">• FreeSASA</text>
   <text x="660" y="488" font-size="9" fill="#555">Lee-Richards algorithm</text>
   <text x="535" y="504" font-size="9.5" fill="#1b5e20">• sc-rs (Rust)</text>
