@@ -63,11 +63,11 @@
   <line x1="565" y1="277" x2="840" y2="277" stroke="#ccc" stroke-width="0.8"/>
 
   <rect x="30" y="284" width="375" height="38" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
-  <text x="217" y="299" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 (initial filter, 3 seeds)</text>
-  <text x="217" y="314" text-anchor="middle" font-size="9.5" fill="#1976d2">iPTM / pLDDT threshold · 3 seeds (faster screening)</text>
+  <text x="217" y="299" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 (initial filter, 5 models)</text>
+  <text x="217" y="314" text-anchor="middle" font-size="9.5" fill="#1976d2">iPTM / pLDDT threshold · 5 models</text>
 
   <rect x="515" y="284" width="375" height="38" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
-  <text x="702" y="299" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 (initial filter, 3 seeds)</text>
+  <text x="702" y="299" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 (initial filter, 5 models)</text>
   <text x="702" y="314" text-anchor="middle" font-size="9.5" fill="#1976d2">Unchanged · CC BY 4.0</text>
   <text x="460" y="308" text-anchor="middle" font-size="16" fill="#bbb">→</text>
 
@@ -91,6 +91,7 @@
   <!-- STAGE 4 -->
   <!-- ============================================================ -->
   <text x="460" y="408" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#555" letter-spacing="1">STAGE 4 — FINAL FILTER  ② OUR PRIMARY CONTRIBUTION</text>
+  <text x="460" y="418" text-anchor="middle" font-size="8" fill="#888" font-style="italic">Pipeline order: ① Chai-1 prediction (5 models) → ② Relax &amp; score → ③ AbLang PLL → filter evaluation</text>
   <line x1="80" y1="413" x2="310" y2="413" stroke="#ccc" stroke-width="0.8"/>
   <line x1="610" y1="413" x2="840" y2="413" stroke="#ccc" stroke-width="0.8"/>
 
@@ -121,11 +122,11 @@
   <text x="702" y="451" text-anchor="middle" font-size="8.5" fill="#388e3c">✓ MIT / Apache 2.0 / LGPL — no commercial license required</text>
   <line x1="535" y1="458" x2="870" y2="458" stroke="#c8e6c9" stroke-width="0.8"/>
   <text x="535" y="472" font-size="9.5" fill="#1b5e20">• OpenMM + FASPR</text>
-  <text x="660" y="472" font-size="9" fill="#555">L-BFGS minimization · OBC2 implicit solvent · sidechain repack</text>
+  <text x="660" y="472" font-size="9" fill="#555">OpenMM energy minimization · FASPR sidechain repack</text>
   <text x="535" y="488" font-size="9.5" fill="#1b5e20">• FreeSASA</text>
-  <text x="660" y="488" font-size="9" fill="#555">Lee-Richards algorithm</text>
+  <text x="660" y="488" font-size="9" fill="#555">solvent accessible surface area</text>
   <text x="535" y="504" font-size="9.5" fill="#1b5e20">• sc-rs (Rust)</text>
-  <text x="660" y="504" font-size="9" fill="#555">Connolly surface shape complementarity</text>
+  <text x="660" y="504" font-size="9" fill="#555">interface shape complementarity</text>
   <text x="535" y="520" font-size="9.5" fill="#1b5e20">• Biopython NeighborSearch</text>
   <text x="660" y="520" font-size="9" fill="#555">interface geometry, contacts, RMSD</text>
   <text x="535" y="536" font-size="9.5" fill="#1b5e20">• Fixed pass-through values †</text>
@@ -135,11 +136,11 @@
 
   <!-- Chai-1 final -->
   <rect x="30" y="578" width="375" height="36" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
-  <text x="217" y="593" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final filter, 5 seeds)</text>
+  <text x="217" y="593" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final filter, 5 models)</text>
   <text x="217" y="609" text-anchor="middle" font-size="9.5" fill="#1976d2">sc-RMSD · iPTM · pLDDT · pAE · filter thresholds</text>
 
   <rect x="515" y="578" width="375" height="36" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
-  <text x="702" y="593" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final filter, 5 seeds)</text>
+  <text x="702" y="593" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final filter, 5 models)</text>
   <text x="702" y="609" text-anchor="middle" font-size="9.5" fill="#1976d2">Unchanged · Apache 2.0</text>
   <text x="460" y="601" text-anchor="middle" font-size="16" fill="#bbb">→</text>
 
