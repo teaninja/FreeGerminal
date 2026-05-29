@@ -153,15 +153,15 @@ Tested on NVIDIA A100 80GB against original Germinal (commit `88d7f85`).
 | Metric | Original Germinal | FreeGerminal v1.0.0 |
 |---|---|---|
 | PD-L1 accepted designs | 7 / 172 trajectories (4.1%) | 3 / 32 trajectories (9.4%) |
-| IL-3 accepted designs | 0 / 223 trajectories | 0 / 37 trajectories |
-| Avg. time per trajectory | ~167 sec | ~268 sec |
+| IL-3 accepted designs | 0 / 223 trajectories | 0 / 90 trajectories |
+| Avg. time per trajectory | ~167 sec | ~258 sec |
 | PyRosetta required | ✅ Yes | ❌ No |
 | IgLM required | ✅ Yes | ❌ No |
 | Commercial use | ⚠️ License required | ✅ Free |
 
 > **For full methods, benchmark details, and analysis, see the accompanying paper (preprint coming soon).**
 
-> Per-trajectory runtime is ~60% slower due to OpenMM relaxation replacing PyRosetta FastRelax; FASPR sidechain repacking is included.
+> Per-trajectory runtime is ~56% slower on average (166s vs 258s; all targets combined). This reflects the OpenMM relaxation step replacing PyRosetta FastRelax. Note: trajectory counts are limited in the current benchmark; additional runs are ongoing and this table will be updated.
 
 ---
 
