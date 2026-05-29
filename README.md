@@ -17,8 +17,8 @@ FreeGerminal replaces PyRosetta — the primary commercial dependency in Germina
 | SASA calculation | PyRosetta | FreeSASA | LGPL |
 | Shape complementarity | PyRosetta | sc-rs | MIT |
 | Interface geometry | PyRosetta | Biopython | MIT |
-| Structure prediction | AF-Multimer | AF-Multimer | CC BY 4.0 |
-| Final filter | Chai-1 | Chai-1 | Apache 2.0 |
+| Gradient-based design | AF-Multimer | AF-Multimer | CC BY 4.0 |
+| Initial & final cofolding filter | Chai-1 v0.6.1 (3 seeds / 5 seeds) | Chai-1 v0.6.1 (3 seeds / 5 seeds) | Apache 2.0 |
 | Sequence redesign | AbMPNN | AbMPNN | MIT |
 
 > **Note:** AbLang integration was implemented by the Germinal team (commit `1e1c1a5`, PR #55/#64/#68). FreeGerminal adopts this update and sets AbLang as the default for all VHH run configurations. The primary contribution of FreeGerminal is the PyRosetta replacement.
