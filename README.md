@@ -2,7 +2,7 @@
 
 **A commercially permissive implementation of the [Germinal](https://github.com/SantiagoMille/germinal) antibody design pipeline (VHH nanobodies and scFv).**
 
-FreeGerminal replaces the two non-commercial dependencies in Germinal — PyRosetta and IgLM — with fully open-source, commercially licensed alternatives, enabling the pipeline to be used in academic and commercial settings without licensing barriers.
+FreeGerminal replaces PyRosetta — the primary commercial dependency in Germinal — with fully open-source alternatives, enabling the pipeline to be used in academic and commercial settings without licensing barriers. IgLM was already replaced by AbLang1 in Germinal commit `1e1c1a5` by the Germinal team; FreeGerminal adopts this update and sets AbLang1 as the default for all VHH configurations.
 
 > ⚠️ **Preprint coming soon.** Code is released ahead of publication to establish priority. Please cite both FreeGerminal and the original Germinal paper (see [Citation](#citation)).
 
@@ -12,7 +12,7 @@ FreeGerminal replaces the two non-commercial dependencies in Germinal — PyRose
 
 | Component | Original Germinal | FreeGerminal | License |
 |---|---|---|---|
-| Antibody LM (gradient) | IgLM | AbLang1-heavy v0.3.1 | Apache 2.0 |
+| Antibody LM (gradient) | IgLM v0.1.0 | AbLang1-heavy v0.3.1 *(updated by Germinal team, commit 1e1c1a5; adopted in FreeGerminal as default)* | Apache 2.0 |
 | Structure relaxation | PyRosetta FastRelax | OpenMM + FASPR | MIT / Apache 2.0 |
 | SASA calculation | PyRosetta | FreeSASA | LGPL |
 | Shape complementarity | PyRosetta | sc-rs | MIT |
