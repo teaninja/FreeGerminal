@@ -92,8 +92,8 @@
   <!-- ============================================================ -->
   <text x="460" y="408" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#555" letter-spacing="1">STAGE 4 — FINAL FILTER  ② OUR PRIMARY CONTRIBUTION</text>
   <text x="460" y="418" text-anchor="middle" font-size="8" fill="#888" font-style="italic">Pipeline order: ① Chai-1 prediction (5 models) → ② Relax &amp; score → ③ AbLang PLL → filter evaluation</text>
-  <line x1="80" y1="406" x2="310" y2="406" stroke="#ccc" stroke-width="0.8"/>
-  <line x1="610" y1="406" x2="840" y2="406" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="80" y1="420" x2="310" y2="420" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="610" y1="420" x2="840" y2="420" stroke="#ccc" stroke-width="0.8"/>
 
   <!-- PyRosetta block -->
   <rect x="30" y="476" width="375" height="150" rx="5" fill="#fce4ec" stroke="#ef9a9a" stroke-width="1.5" stroke-dasharray="5,3"/>
@@ -120,7 +120,7 @@
   <rect x="515" y="476" width="375" height="150" rx="5" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1.5"/>
   <text x="702" y="493" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1b5e20">Open-Source Alternatives</text>
   <text x="702" y="507" text-anchor="middle" font-size="8.5" fill="#388e3c">✓ MIT / Apache 2.0 / LGPL — no commercial license required</text>
-  <line x1="535" y1="458" x2="870" y2="458" stroke="#c8e6c9" stroke-width="0.8"/>
+  <line x1="535" y1="514" x2="870" y2="514" stroke="#c8e6c9" stroke-width="0.8"/>
   <text x="535" y="528" font-size="9.5" fill="#1b5e20">• OpenMM + FASPR</text>
   <text x="660" y="528" font-size="9" fill="#555">OpenMM energy minimization · FASPR sidechain repack</text>
   <text x="535" y="544" font-size="9.5" fill="#1b5e20">• FreeSASA</text>
@@ -142,7 +142,7 @@
   <rect x="515" y="422" width="375" height="36" rx="5" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.2"/>
   <text x="702" y="437" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1565c0">Chai-1 v0.6.1 (final filter, 5 models)</text>
   <text x="702" y="452" text-anchor="middle" font-size="9.5" fill="#1976d2">Unchanged · Apache 2.0</text>
-  <text x="460" y="601" text-anchor="middle" font-size="16" fill="#bbb">→</text>
+  <text x="460" y="440" text-anchor="middle" font-size="16" fill="#bbb">→</text>
 
   <!-- Output -->
   <rect x="280" y="650" width="360" height="32" rx="5" fill="#e0f2f1" stroke="#00897b" stroke-width="1.5"/>
